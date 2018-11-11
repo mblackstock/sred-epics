@@ -28,7 +28,7 @@ def personTotal(person, parseList):
 
     return [person.upper()] + EngSREDConnector + EngSREDUniversal + EngSREDTools + EngSREDVisibility + EngNonSRED
 
-inputFile = "in.csv"
+inputFile = "raw-data/test.csv"
 outputFile = "out.csv"
 
 if len(sys.argv) > 2:
