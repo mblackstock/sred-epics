@@ -1,4 +1,4 @@
-# SRED Time Reporting Tool
+# SRED Epic Reporting Tool
 
 Tool to generate useful reports from Harvest data for SRED reporting using [numpy](http://www.numpy.org/) and [pandas](https://pandas.pydata.org/).
 
@@ -16,6 +16,6 @@ To run it in the shell:
 
 ```
 pipenv shell
-python weekly_report.py raw-data/harvest_time_report_from2018-10-01to2018-12-31.csv
+python weekly_report.py data/harvest_time_report_from2018-10-01to2018-12-31.csv
 ```
 This will generate csv files in the `reports` directory
