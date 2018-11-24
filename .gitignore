@@ -1,1 +1,9 @@
 *.pyc
+
+reports/*
+!reports/.keep
+
+data/*
+!data/.keep 
+
+settings.json
