@@ -99,6 +99,9 @@ if __name__ == "__main__":
     df = pd.read_csv(inputFile)
     df = clean_table(df)
 
+    if not os.path.exists(reportDir):
+        os.makedirs(reportDir)
+
     # result = week_person_hour_epics(df)
     result = person_week_hours(df)
     print(result)

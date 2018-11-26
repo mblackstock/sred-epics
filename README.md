@@ -2,6 +2,13 @@
 
 Tool to generate useful reports from Harvest data for SRED reporting using [numpy](http://www.numpy.org/) and [pandas](https://pandas.pydata.org/).
 
+Currently generates two csv files:
+
+Person week work hours - `hours.csv`
+Person week epic lists - `epics.csv`
+
+Note that the reports exclude time off.
+
 To work with the tool you need to use the [pipenv python packaging and environment stool](https://pipenv.readthedocs.io/en/latest/) to install the dependencies.
 
 Once the repo is cloned, cd to the directory and run.
@@ -16,6 +23,6 @@ To run it in the shell:
 
 ```
 pipenv shell
-python weekly_report.py data/harvest_time_report_from2018-10-01to2018-12-31.csv
+python weekly_report.py data/harvest_time_report_from2018-10-01to2018-12-31.csv reports-2018-11-25
 ```
-This will generate csv files in the `reports` directory
+This will generate csv files in the `reports-2018-11-25` directory
