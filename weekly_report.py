@@ -7,6 +7,7 @@ from datetime import timedelta
 from dateutil.parser import parse
 import pandas as pd
 import numpy as np
+import math
 
 import config
 
@@ -56,29 +57,56 @@ def person_week_hours(data):
     }
     df = data.groupby(['Full Name','Week']).agg(aggregation).reset_index()
     return df.pivot(index='Full Name', columns='Week', values=['Hours'])
-    
+
+def note_aggregator(note):
+    agg = np.unique(note[note != ''])
+    isNan = False
+    try:
+        isNan = math.isnan(note)
+    except:
+        isNan = False
+
+    if isNan:
+        return 'None'
+
+    epics = ','.join(agg)
+    if epics =='':
+        epics='none'
+    return epics
+
 def person_week_epics(data):
     """return table of people by weeks with epics that week"""
     aggregation = {
-        'Notes':lambda note: np.unique(note[note != ''])
+        'Notes':note_aggregator
     }
     df = data.groupby(['Full Name','Week']).agg(aggregation).reset_index()
     return df.pivot(index='Full Name', columns='Week', values='Notes')
 
+def person_week_missing(data):
+    """return table of people by weeks with epics that week"""
+    aggregation = {
+        'Notes':note_aggregator
+    }
+    df = data.groupby(['Full Name','Week']).agg(aggregation).reset_index()
+    # keep only Note columns that are empty
+    df = df[df['Notes'].str.contains('none') == True]
+    return df.pivot(index='Full Name', columns='Week', values='Notes')
+
 def clean_table(data):
-    """remove time off, add week, full name columns, and replace nan in Notes with empty strings"""
-
-    # remove time off tasks (sick, vacation)
-    df = data[data[config.TASK_COLUMN].str.contains(config.TIME_OFF) == False]
-
-    # add needed columns
-    # df['Week'] = df.apply(lambda row:week_start(row['Date']), axis=1)
-
+    """add week, full name columns, and replace NaN in Notes with empty strings"""
     df.loc[:,'Week'] = df.apply(lambda row:week_start(row['Date']), axis=1)
-
-    # df['Full Name'] = df.apply(lambda row: row['First Name']+' '+row['Last Name'], axis=1)
     df.loc[:,'Full Name'] = df.apply(lambda row: row['First Name']+' '+row['Last Name'], axis=1)
     df['Notes'].fillna('', inplace=True)
+    return df
+
+def work_table(data):
+    """remove time off tasks"""
+    df = data[data[config.TASK_COLUMN].str.contains(config.TIME_OFF_PREFIX) == False]
+    return df
+
+def sred_table(data):
+    """keep only SRED work"""
+    df = data[data[config.PROJECT_COLUMN].str.contains(config.SRED_PREFIX)]
     return df
 
 if __name__ == "__main__":
@@ -102,12 +130,24 @@ if __name__ == "__main__":
     if not os.path.exists(reportDir):
         os.makedirs(reportDir)
 
-    # result = week_person_hour_epics(df)
+    result = week_person_hour_epics(df)
     result = person_week_hours(df)
     print(result)
-    result.to_csv(os.path.join(reportDir, "hours.csv"))
+    result.to_csv(os.path.join(reportDir, "total-hours.csv"))
 
-    result = person_week_epics(df)
+    result = person_week_hours(work_table(df))
+    print(result)
+    result.to_csv(os.path.join(reportDir, "work-hours.csv"))
+
+    result = person_week_hours(sred_table(df))
+    print(result)
+    result.to_csv(os.path.join(reportDir, "sred-hours.csv"))
+
+    result = person_week_missing(sred_table(df))
+    print(result)
+    result.to_csv(os.path.join(reportDir, "missing-epics.csv"))
+
+    result = person_week_epics(sred_table(df))
     print(result)
     result.to_csv(os.path.join(reportDir, "epics.csv"))
 

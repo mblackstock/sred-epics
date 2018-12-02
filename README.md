@@ -2,12 +2,16 @@
 
 Tool to generate useful reports from Harvest data for SRED reporting using [numpy](http://www.numpy.org/) and [pandas](https://pandas.pydata.org/).
 
-Currently generates two csv files:
+Currently generates several csv files:
 
-Person week work hours - `hours.csv`
-Person week epic lists - `epics.csv`
+* Person week total hours including time off - `total-hours.csv`
+* Person week work hours  - `work-hours.csv`
+* Person week SRED hours - `sred-hours.csv`
+* Person week epic lists - `epics.csv`
+* Person week missing epics - `missing-epics.csv`
 
-Note that the reports exclude time off.
+The `epics.csv` file shows the list of Notes for a given week.  No cleanup is done on the Notes themselves.
+The `missing-epics.csv` list indicates weeks where there was SRED hours log, but there was no Note for that week.
 
 To work with the tool you need to use the [pipenv python packaging and environment stool](https://pipenv.readthedocs.io/en/latest/) to install the dependencies.
 
