@@ -11,7 +11,7 @@ Currently generates several csv files:
 * Person week missing epics - `missing-epics.csv`
 
 The `epics.csv` file shows the list of Notes for a given week.  No cleanup is done on the Notes themselves.
-The `missing-epics.csv` list indicates weeks where there was SRED hours log, but there was no Note for that week.
+The `missing-epics.csv` list indicates weeks where there was SRED hours logged, but there was no Note for that week.
 
 To work with the tool you need to use the [pipenv python packaging and environment stool](https://pipenv.readthedocs.io/en/latest/) to install the dependencies.
 

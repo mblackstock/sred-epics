@@ -71,7 +71,7 @@ def note_aggregator(note):
 
     epics = ','.join(agg)
     if epics =='':
-        epics='none'
+        epics='missing'
     return epics
 
 def person_week_epics(data):
@@ -89,24 +89,30 @@ def person_week_missing(data):
     }
     df = data.groupby(['Full Name','Week']).agg(aggregation).reset_index()
     # keep only Note columns that are empty
-    df = df[df['Notes'].str.contains('none') == True]
+    df = df[df['Notes'].str.contains('missing') == True]
     return df.pivot(index='Full Name', columns='Week', values='Notes')
 
 def clean_table(data):
     """add week, full name columns, and replace NaN in Notes with empty strings"""
-    df.loc[:,'Week'] = df.apply(lambda row:week_start(row['Date']), axis=1)
-    df.loc[:,'Full Name'] = df.apply(lambda row: row['First Name']+' '+row['Last Name'], axis=1)
-    df['Notes'].fillna('', inplace=True)
-    return df
+    data.loc[:,'Week'] = data.apply(lambda row:week_start(row['Date']), axis=1)
+    data.loc[:,'Full Name'] = data.apply(lambda row: row['First Name']+' '+row['Last Name'], axis=1)
+    data['Notes'].fillna('', inplace=True)
+    return data
 
 def work_table(data):
-    """remove time off tasks"""
+    """keep only non-time off entries"""
     df = data[data[config.TASK_COLUMN].str.contains(config.TIME_OFF_PREFIX) == False]
+    # df = data.copy()
+    # mask = df[config.TASK_COLUMN].str.contains(config.TIME_OFF_PREFIX)
+    # df.loc[mask,'Hours'] = 0
     return df
 
 def sred_table(data):
-    """keep only SRED work"""
+    """keep only SRED entries"""
     df = data[data[config.PROJECT_COLUMN].str.contains(config.SRED_PREFIX)]
+    # df = data.copy()
+    # mask = df[config.PROJECT_COLUMN].str.contains(config.SRED_PREFIX) == False
+    # df.loc[mask,'Hours'] = 0
     return df
 
 if __name__ == "__main__":
@@ -130,7 +136,6 @@ if __name__ == "__main__":
     if not os.path.exists(reportDir):
         os.makedirs(reportDir)
 
-    result = week_person_hour_epics(df)
     result = person_week_hours(df)
     print(result)
     result.to_csv(os.path.join(reportDir, "total-hours.csv"))
