@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "raw-data/test.csv"
+                "data/test.csv"
             ],
         },
         {
