@@ -12,4 +12,6 @@ PROJECT_COLUMN = "Project"
 DEFAULT_IN_FILE ="data.csv"
 DEFAULT_OUT_DIR ="reports"
 
+UNUSED_COLUMNS = ["Employee?", "Billable?", "Invoiced?", "Approved?", "Employee?", "Roles", "External Reference URL", "Client", "Project Code"]
+
 

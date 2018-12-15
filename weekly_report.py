@@ -34,22 +34,6 @@ def week_start(date_str):
 
     return start_date
 
-def week_person_hour_epics(data):
-    """Group by week and person, hours, number of Notes, and list of notes"""
-
-    aggregation = {
-        'Hours':{
-            'total_hours':'sum'
-        },
-        'Notes':{
-            'note_count':lambda note: np.unique(note[note != '']).size,
-            # 'epics':lambda note: "%s" % ', '.join(np.unique(note[note != ''])),
-            'epics_list':lambda note: np.unique(note[note != ''])
-        }
-    }
-    df = data.groupby(['Week','Full Name']).agg(aggregation)
-    return df
-
 def person_week_hours(data):
     """return table of people by weeks with hours"""
     aggregation = {
@@ -60,14 +44,6 @@ def person_week_hours(data):
 
 def note_aggregator(note):
     agg = np.unique(note[note != ''])
-    isNan = False
-    try:
-        isNan = math.isnan(note)
-    except:
-        isNan = False
-
-    if isNan:
-        return 'None'
 
     epics = ','.join(agg)
     if epics =='':
@@ -83,12 +59,12 @@ def person_week_epics(data):
     return df.pivot(index='Full Name', columns='Week', values='Notes')
 
 def person_week_missing(data):
-    """return table of people by weeks with epics that week"""
+    """return table of people by weeks with missing epics that week"""
     aggregation = {
         'Notes':note_aggregator
     }
     df = data.groupby(['Full Name','Week']).agg(aggregation).reset_index()
-    # keep only Note columns that are empty
+    # keep only rows where Note columns are missing for the week
     df = df[df['Notes'].str.contains('missing') == True]
     return df.pivot(index='Full Name', columns='Week', values='Notes')
 
@@ -96,24 +72,31 @@ def clean_table(data):
     """add week, full name columns, and replace NaN in Notes with empty strings"""
     data.loc[:,'Week'] = data.apply(lambda row:week_start(row['Date']), axis=1)
     data.loc[:,'Full Name'] = data.apply(lambda row: row['First Name']+' '+row['Last Name'], axis=1)
+    data = data.drop(config.UNUSED_COLUMNS, axis=1)
     data['Notes'].fillna('', inplace=True)
     return data
 
 def work_table(data):
-    """keep only non-time off entries"""
+    """keep only work hour entries"""
     df = data[data[config.TASK_COLUMN].str.contains(config.TIME_OFF_PREFIX) == False]
-    # df = data.copy()
-    # mask = df[config.TASK_COLUMN].str.contains(config.TIME_OFF_PREFIX)
-    # df.loc[mask,'Hours'] = 0
     return df
 
 def sred_table(data):
     """keep only SRED entries"""
     df = data[data[config.PROJECT_COLUMN].str.contains(config.SRED_PREFIX)]
-    # df = data.copy()
-    # mask = df[config.PROJECT_COLUMN].str.contains(config.SRED_PREFIX) == False
-    # df.loc[mask,'Hours'] = 0
     return df
+
+def update_index(df, index):
+    """create index on Full Name, then replace with new Full Name index"""
+    df = df.reset_index()
+    df.set_index("Full Name")
+    return df.set_index("Full Name").reindex(index)
+
+def create_people_index(df):
+    """create an index with all of the unique names"""
+    people = df['Full Name'].unique()
+    people = np.sort(people)
+    return pd.Index(people, name="Full Name")
 
 if __name__ == "__main__":
 
@@ -133,28 +116,48 @@ if __name__ == "__main__":
     df = pd.read_csv(inputFile)
     df = clean_table(df)
 
+    # spew out some stats
+    print('Total Hours %d' % df['Hours'].sum())
+    print('Total SRED Hours %d' % df['Hours'][df['Project'].str.contains('Engineering R&D')].sum())
+    print('Number of people reporting %d' % df['Full Name'].nunique())
+
     if not os.path.exists(reportDir):
         os.makedirs(reportDir)
 
+    # save cleaned up table
+    df.to_csv(os.path.join(reportDir, "clean-report.csv"))
+
+    # create complete people index so we have entries for everyone
+    people_index = create_people_index(df)
+
+    workdf = work_table(df)
+
+    sreddf = sred_table(df)
+
     result = person_week_hours(df)
-    print(result)
+    result = update_index(result, people_index)
     result.to_csv(os.path.join(reportDir, "total-hours.csv"))
 
-    result = person_week_hours(work_table(df))
-    print(result)
+    result = person_week_hours(workdf)
+    result = update_index(result, people_index)
     result.to_csv(os.path.join(reportDir, "work-hours.csv"))
 
-    result = person_week_hours(sred_table(df))
-    print(result)
+    result = person_week_hours(sreddf)
+    result = update_index(result, people_index)
     result.to_csv(os.path.join(reportDir, "sred-hours.csv"))
 
-    result = person_week_missing(sred_table(df))
-    print(result)
+    result = person_week_missing(sreddf)
+    result = update_index(result, people_index)
     result.to_csv(os.path.join(reportDir, "missing-epics.csv"))
 
-    result = person_week_epics(sred_table(df))
+    result = person_week_epics(sreddf)
+    result = update_index(result, people_index)
     print(result)
+
+    # print(result)
     result.to_csv(os.path.join(reportDir, "epics.csv"))
+
+    print('Done writing reports in "%s"' % reportDir)
 
     
 
