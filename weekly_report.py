@@ -8,8 +8,10 @@ from dateutil.parser import parse
 import pandas as pd
 import numpy as np
 import math
+import re
 
 import config
+
 
 def week_start(date_str):
     """Find the first day of the week for the given day.
@@ -22,6 +24,17 @@ def week_start(date_str):
 
     start_date = date - timedelta(dow-1)
     return start_date
+
+def get_epics_from_comments(comment):
+    """return a list of JIRA issues found in the comment (epics)
+    """
+    pattern = re.compile('([A-Za-z]+\\-[0-9]+)')
+
+    epics = pattern.findall(comment)
+
+    epics = [epic.upper() for epic in epics]
+
+    return epics
 
 
 def person_week_hours(data):
@@ -40,6 +53,7 @@ def note_aggregator(note):
         epics='missing'
     return epics
 
+# TODO: aggregate epic lists, not notes
 def person_week_epics(data):
     """return table of people by weeks with epics that week"""
     aggregation = {
@@ -64,6 +78,7 @@ def clean_table(data):
     data.loc[:,'Full Name'] = data.apply(lambda row: row['First Name']+' '+row['Last Name'], axis=1)
     data = data.drop(config.UNUSED_COLUMNS, axis=1)
     data['Notes'].fillna('', inplace=True)
+    data.loc[:,'Epics'] = data.apply(lambda row: get_epics_from_comments(row['Notes']), axis=1)
     return data
 
 def work_table(data):
