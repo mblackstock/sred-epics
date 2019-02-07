@@ -53,14 +53,19 @@ def note_aggregator(note):
         epics='missing'
     return epics
 
-# TODO: aggregate epic lists, not notes
+def epic_aggregator(epic_list):
+    epics = []
+    for row in epic_list:
+        epics = epics+row
+    return epics
+
 def person_week_epics(data):
     """return table of people by weeks with epics that week"""
     aggregation = {
-        'Notes':note_aggregator
+        'Epics':epic_aggregator
     }
     df = data.groupby(['Full Name','Week']).agg(aggregation).reset_index()
-    return df.pivot(index='Full Name', columns='Week', values='Notes')
+    return df.pivot(index='Full Name', columns='Week', values='Epics')
 
 def person_week_missing(data):
     """return table of people by weeks with missing epics that week"""
@@ -157,9 +162,6 @@ if __name__ == "__main__":
 
     result = person_week_epics(sreddf)
     result = update_index(result, people_index)
-    print(result)
-
-    # print(result)
     result.to_csv(os.path.join(reportDir, "epics.csv"))
 
     print('Done writing reports in "%s"' % reportDir)
